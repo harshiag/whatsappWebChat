@@ -1,0 +1,72 @@
+class ConsistentHashing:
+    def __init__(self, replicas=3):
+    self.replicas = replicas
+    self.hash_ring = {}
+
+    def add_node(self, node):
+    for i in range(self.replicas):
+    virtual_node = f"{node}-{i}"
+    hash_value = self._get_hash(virtual_node)
+    self.hash_ring[hash_value] = node
+
+    def remove_node(self, node):
+    for i in range(self.replicas):
+    virtual_node = f"{node}-{i}"
+    hash_value = self._get_hash(virtual_node)
+    del self.hash_ring[hash_value]
+
+    def get_node(self, key):
+    if not self.hash_ring:
+    return None
+
+    hash_key = self._get_hash(key)
+    sorted_keys = sorted(self.hash_ring.keys())
+    for h in sorted_keys:
+    if hash_key <= h:
+    return self.hash_ring[h]
+
+    //# If the hash_key is greater than the largest key in the hash ring,
+    # return the first node in the ring to create a circular effect.
+    return self.hash_ring[sorted_keys[0]]
+
+    def _get_hash(self, key):
+    return hash(key) % (2 ** 32)
+
+
+    //# Example usage:
+    ch = ConsistentHashing(replicas=3)
+    ch.add_node("Node1")
+    ch.add_node("Node2")
+    ch.add_node("Node3")
+
+    //# Get the node responsible for a specific key
+    key = "my_data_key"
+    responsible_node = ch.get_node(key)
+    print(f"Data with key '{key}' is stored in Node: {responsible_node}")
+
+    //# Adding a new node and checking data distribution
+    ch.add_node("Node4")
+    print("Data distribution after adding Node4:")
+    for i in range(10):
+    key = f"data{i}"
+    responsible_node = ch.get_node(key)
+    print(f"Data '{key}' is stored in Node: {responsible_node}")
+
+    //# Removing a node and checking data distribution
+    ch.remove_node("Node2")
+    print("Data distribution after removing Node2:")
+    for i in range(10):
+    key = f"data{i}"
+    responsible_node = ch.get_node(key)
+    print(f"Data '{key}' is stored in Node: {responsible_node}")
+
+
+// consistent hashing explained..
+
+    Imagine you and your friends are cleaning up toys. Consistent hashing is like deciding who picks up which toys based on the toy's name. Let's say you pick up toys that start with A-F, your friend picks up toys that start with G-M, and another friend picks up toys N-Z. This way, the work of cleaning is split evenly.
+
+    But what happens when you have a new friend join? With consistent hashing, a new friend could take over toys that start with M-Z. Even though the work needs to be moved around to let your new friend help, you and the friend who was originally helping don't have to renegotiate which toys you're picking up, just move some to the new friend.
+
+    And what if a friend leaves? Then you might take over toys starting with N-R, while your other friend takes over toys starting with S-Z. Yes, you both have to pick up some extra toys, but the rest of the toys don't really get affected.
+
+    So consistent hashing ensures everyone knows what they need to pick up, and it's easy to adjust when friends join or leave.
